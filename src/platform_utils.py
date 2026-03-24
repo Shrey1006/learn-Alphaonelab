@@ -7,6 +7,7 @@ error logging. It is the shared tools file, not the place for route logic.
 """
 
 import base64
+import hmac as _hmac
 import json
 import re
 import traceback
@@ -206,7 +207,7 @@ def is_basic_auth_valid(req, env) -> bool:
     except Exception:
         return False
 
-    return user == username and pwd == password
+    return _hmac.compare_digest(user, username) and _hmac.compare_digest(pwd, password)
 
 
 async def init_db(env):
