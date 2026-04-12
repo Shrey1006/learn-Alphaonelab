@@ -1,3 +1,7 @@
+"""
+Admin-only API handlers live here.
+"""
+
 from http_utils import is_basic_auth_valid, json_resp, unauthorized_basic
 
 

@@ -39,20 +39,14 @@ async def _import_aes_key(key_bytes: bytes) -> object:
 
 
 async def encrypt_aes(plaintext: str, secret: str) -> str:
-    """
-    AES-256-GCM encryption using js.crypto.subtle (Web Crypto API).
-    Returns "v1:" + base64(iv || ciphertext+tag).
-    """
     if not plaintext:
         return ""
     try:
         key_bytes = _derive_aes_key_bytes(secret)
         crypto_key = await _import_aes_key(key_bytes)
-
         iv_array = js.Uint8Array.new(12)
         js.crypto.getRandomValues(iv_array)
         iv = bytes(iv_array)
-
         algo = to_js({"name": "AES-GCM", "iv": iv_array}, dict_converter=js.Object.fromEntries)
         data = to_js(plaintext.encode("utf-8"))
         ct_buf = await js.crypto.subtle.encrypt(algo, crypto_key, data)
@@ -64,7 +58,6 @@ async def encrypt_aes(plaintext: str, secret: str) -> str:
 
 
 async def decrypt_aes(ciphertext: str, secret: str) -> str:
-    """AES-256-GCM decryption. Handles both v1 and legacy XOR ciphertext."""
     if not ciphertext:
         return ""
     if not ciphertext.startswith("v1:"):
@@ -89,7 +82,6 @@ async def decrypt_aes(ciphertext: str, secret: str) -> str:
 
 
 def _encrypt_xor(plaintext: str, secret: str) -> str:
-    """Legacy XOR stream cipher kept for backward compatibility only."""
     if not plaintext:
         return ""
     key = _derive_key(secret)
@@ -99,7 +91,6 @@ def _encrypt_xor(plaintext: str, secret: str) -> str:
 
 
 def _decrypt_xor(ciphertext: str, secret: str) -> str:
-    """Legacy XOR stream cipher decryption kept for backward compatibility."""
     if not ciphertext:
         return ""
     try:
@@ -112,7 +103,6 @@ def _decrypt_xor(ciphertext: str, secret: str) -> str:
 
 
 def blind_index(value: str, secret: str) -> str:
-    """HMAC-SHA256 deterministic hash used as a blind index."""
     return _hmac.new(
         secret.encode("utf-8"), value.lower().encode("utf-8"), hashlib.sha256
     ).hexdigest()
@@ -123,12 +113,10 @@ _PBKDF2_IT = 100_000
 
 
 def _user_salt(username: str) -> bytes:
-    """Per-user PBKDF2 salt = SHA-256(pepper || username)."""
     return hashlib.sha256(_PEPPER + username.encode("utf-8")).digest()
 
 
 def hash_password(password: str, username: str) -> str:
-    """PBKDF2-SHA256 with per-user derived salt."""
     dk = hashlib.pbkdf2_hmac(
         "sha256", password.encode("utf-8"), _user_salt(username), _PBKDF2_IT
     )
@@ -150,7 +138,6 @@ def create_token(uid: str, username: str, role: str, secret: str) -> str:
 
 
 def verify_token(raw: str, secret: str):
-    """Return decoded payload dict or None if invalid/missing."""
     if not raw:
         return None
     try:
