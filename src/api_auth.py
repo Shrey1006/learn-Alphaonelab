@@ -90,6 +90,8 @@ async def api_login(req, env):
     real_name = await decrypt_aes(row.name, enc)
     if not real_role or real_role == "[decryption error]":
         return err("Account data corrupted - please contact support", 500)
+    if not real_name or real_name == "[decryption error]":
+        return err("Account data corrupted - please contact support", 500)
 
     token = create_token(row.id, stored_username, real_role, env.JWT_SECRET)
     return ok(

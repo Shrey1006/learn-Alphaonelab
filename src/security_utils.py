@@ -124,7 +124,7 @@ def hash_password(password: str, username: str) -> str:
 
 
 def verify_password(password: str, stored: str, username: str) -> bool:
-    return hash_password(password, username) == stored
+    return _hmac.compare_digest(hash_password(password, username), stored)
 
 
 def create_token(uid: str, username: str, role: str, secret: str) -> str:
